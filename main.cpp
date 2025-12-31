@@ -165,7 +165,7 @@ public:
     points.insert(points.end(), points3.begin(), points3.end());
     depths.insert(depths.end(), depths3.begin(), depths3.end());
 
-    for (int y = top; y <= bottom; ++y) {
+    for (int y = top; y <= bottom; ++y) { // y referring to up/down (2d)
       int minX = std::numeric_limits<int>::max();
       int maxX = std::numeric_limits<int>::min();
       float minDepth = 0;
@@ -187,6 +187,8 @@ public:
         }
       }
 
+      minDepth -= cameraPos[1];
+      maxDepth -= cameraPos[1];
       for (int x = minX; x <= maxX; ++x) {
         std::array<int, 2> point = {x, y};
         float depth;
@@ -195,16 +197,36 @@ public:
         } else {
           depth = ((x - minX) / (maxX - minX) * (minDepth - maxDepth) + minDepth); // linear interpolation
         }
-        float ooz = 1 / std::abs(depth);
+        float ooz = 1 / depth;
         addPoint(buffer, zBuffer, width, height, point, ooz, letter);
       }
+    }
+  }
+
+  void rotate(float yaw, float roll, float pitch) {
+    for (int i = 0; i < 3; ++i) {
+      float x = vertices[i][0];
+      float y = vertices[i][1];
+      float z = vertices[i][2];
+
+      vertices[i][0] = x * (std::cos(yaw) * std::cos(pitch)) + y * (std::cos(yaw) * std::sin(pitch) * std::sin(roll) - std::sin(yaw) * std::cos(roll)) + z * (std::cos(yaw) * std::sin(pitch) * std::cos(roll) + std::sin(yaw) * std::sin(roll));
+      vertices[i][1] = x * (std::sin(yaw) * std::cos(pitch)) + y * (std::sin(yaw) * std::sin(pitch) * std::sin(roll) + std::cos(yaw) * std::cos(roll)) + z * (std::sin(yaw) * std::sin(pitch) * std::cos(roll) - std::cos(yaw) * std::sin(roll));
+      vertices[i][2] = x * (-std::sin(pitch)) + y * (std::cos(pitch) * std::sin(roll)) + z * (std::cos(pitch) * std::cos(roll));
+    }
+  }
+
+  void translate(float x, float y, float z) {
+    for (int i = 0; i < 3; ++i) {
+      vertices[i][0] += x;
+      vertices[i][1] += y;
+      vertices[i][2] += z;
     }
   }
 };
 
 
 int main() {
-  int width = 40;
+  int width = 60;
   int height = 40;
   int focalLength = 100;
   char buffer[width * height];
@@ -212,7 +234,7 @@ int main() {
   emptyBuffer(buffer, width, height);
   emptyBuffer(zBuffer, width, height);
 
-  std::array<float, 3> cameraPos = {0.0f, -80.0f, 0.0f};
+  std::array<float, 3> cameraPos = {0.0f, -150.0f, 0.0f};
   std::array<float, 3> point1 = {0, 0, 0};
   std::array<float, 3> point2 = {0, 0, 8};
   std::array<float, 3> point3 = {std::sqrt(32), -std::sqrt(32), 0};
@@ -231,29 +253,18 @@ int main() {
 
   Triangle trigs[3] = {trig1, trig2, trig3};
 
-  float a = 0; // yaw
-  float b = 0; // pitch
-  float c = 0.1; // roll
   while (1) {
     emptyBuffer(buffer, width, height);
     emptyBuffer(zBuffer, width, height);
     clearScreen();
 
-     for (int o = 0; o < sizeof(trigs) / sizeof(Triangle); ++o) {
-      Triangle trig = trigs[o];
-       for (int i = 0; i < 3; ++i) {
-         if (o != 2) {
-          float x = trig.vertices[i][0];
-          float y = trig.vertices[i][1];
-          float z = trig.vertices[i][2];
+     for (int i = 0; i < 3; ++i) {
+      Triangle trig = trigs[i];
+      if (i != 2) trig.rotate(0.1, 0, 0);
+      if (i == 2) trig.translate(0, -0.4, 0);
 
-          trig.vertices[i][0] = x * (std::cos(a) * std::cos(b)) + y * (std::cos(a) * std::sin(b) * std::sin(c) - std::sin(a) * std::cos(c)) + z * (std::cos(a) * std::sin(b) * std::cos(c) + std::sin(a) * std::sin(c));
-          trig.vertices[i][1] = x * (std::sin(a) * std::cos(b)) + y * (std::sin(a) * std::sin(b) * std::sin(c) + std::cos(a) * std::cos(c)) + z * (std::sin(a) * std::sin(b) * std::cos(c) - std::cos(a) * std::sin(c));
-          trig.vertices[i][2] = x * (-std::sin(b)) + y * (std::cos(b) * std::sin(c)) + z * (std::cos(b) * std::cos(c));
-         }
-      }
       trig.draw(buffer, zBuffer, width, height, cameraPos, focalLength);
-      trigs[o] = trig;
+      trigs[i] = trig;
     }
 
     drawBuffer(buffer, width, height);
