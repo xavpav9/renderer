@@ -15,8 +15,8 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
   std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
   std::array<int, 2> vertex3 = get2dPos(cameraAdjustedVertices[2], focalLength);
 
-  int top = (int)std::min(vertex1[1], std::min(vertex2[1], vertex3[1]));
-  int bottom = (int)std::max(vertex1[1], std::max(vertex2[1], vertex3[1]));
+  int top = std::round(std::min(vertex1[1], std::min(vertex2[1], vertex3[1])));
+  int bottom = std::round(std::max(vertex1[1], std::max(vertex2[1], vertex3[1])));
 
   auto values = getPoints(vertex1, cameraAdjustedVertices[0][1], vertex2, cameraAdjustedVertices[1][1]);
   std::vector<std::array<int,2>> points = std::get<0>(values);
@@ -62,15 +62,16 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
       if (minX == maxX) {
         depth = minDepth;
       } else {
-        depth = ((x - minX) / (maxX - minX) * (minDepth - maxDepth) + minDepth); // linear interpolation
+        depth = (float)(x - minX) / (float)(maxX - minX) * (maxDepth - minDepth) + minDepth; // linear interpolation
       }
+
       float ooz = 1 / depth;
       screen.addPoint(point, ooz, letter);
     }
   }
 }
 
-void Triangle::rotate(float yaw, float roll, float pitch) {
+void Triangle::rotate(float yaw, float pitch, float roll) {
   for (int i = 0; i < 3; ++i) {
     float x = vertices[i][0];
     float y = vertices[i][1];
