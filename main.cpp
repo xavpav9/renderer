@@ -48,8 +48,8 @@ int main() {
   std::vector<Model> models;
 
   int focalLength = 100;
-  std::array<float, 3> cameraPos = {0, -150, 0};
-  std::array<float, 3> cameraRot = {0, 0, 0};
+  std::array<float, 3> cameraPos = {0, -300, -10};
+  std::array<float, 3> cameraRot = {0, 0, PI / 20};
 
   std::array<float, 3> point1;
   std::array<float, 3> point2;

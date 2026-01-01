@@ -10,7 +10,7 @@ Triangle::Triangle(std::array<std::array<float, 3>, 3> points, char fillLetter) 
 }
 
 void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength) {
-  std::array<std::array<float,3>,3> cameraAdjustedVertices = translateVertices(rotateVertices(vertices, cameraRot[0], cameraRot[1], cameraRot[2]), -cameraPos[0], -cameraPos[1], -cameraPos[2]);
+  std::array<std::array<float,3>,3> cameraAdjustedVertices = rotateVertices(translateVertices(vertices, -cameraPos[0], -cameraPos[1], -cameraPos[2]), -cameraRot[0], -cameraRot[1], -cameraRot[2]);
   std::array<int, 2> vertex1 = get2dPos(cameraAdjustedVertices[0], focalLength);
   std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
   std::array<int, 2> vertex3 = get2dPos(cameraAdjustedVertices[2], focalLength);
