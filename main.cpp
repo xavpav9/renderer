@@ -8,20 +8,10 @@
 #include <array>
 #include <tuple>
 
+const float PI = 3.14159265358979323846;
+
 void clearScreen() {
   std::cout << "\033[2J\033[1;1H";
-}
-
-void emptyBuffer(char buffer[], int width, int height) {
-  for (int i = 0; i < width * height; ++i) {
-    buffer[i] = ' ';
-  }
-}
-
-void emptyBuffer(float buffer[], int width, int height) {
-  for (int i = 0; i < width * height; ++i) {
-    buffer[i] = 0;
-  }
 }
 
 std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength) {
@@ -98,37 +88,55 @@ std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::ar
   return  { points, depths };
 }
 
-void drawBuffer(char buffer[], int width, int height) {
-  for (int i = 0; i < width * height; ++i) {
-    std::cout << buffer[i];
-    if ((i + 1) % width == 0) {
-      std::cout << std::endl;
+class Screen {
+public:
+  int width;
+  int height;
+  std::vector<char> buffer;
+  std::vector<float> zBuffer;
+
+  Screen(int w, int h) {
+    width = w;
+    height = h;
+    for (int i = 0; i < w * h; ++i) {
+      buffer.push_back(' ');
+      zBuffer.push_back(0);
     }
   }
-}
 
-void addPoint(char buffer[], float zBuffer[], int width, int height, std::array<int, 2> point, float ooz /* one over z - for z-buffer */, char letter) {
-  point[1] = -point[1];
-  point[0] += (int)(width / 2);
-  point[1] += (int)(height / 2);
-  if (point[0] < width && point[0] >= 0 && point[1] >= 0 && point[1] < height) {
-    if (ooz > zBuffer[width * point[1] + point[0]]) {
-      buffer[width * point[1] + point[0]] = letter;
-      zBuffer[width * point[1] + point[0]] = ooz;
+  void emptyBuffer() {
+    for (int i = 0; i < width * height; ++i) {
+      buffer[i] = ' ';
     }
   }
-}
 
-void drawLine(char buffer[], float zBuffer[], int width, int height, std::array<float, 3> start, std::array<float, 3> end, std::array<float, 3> cameraPos, int focalLength) {
-  std::array<int, 2> start2d = get2dPos(start, focalLength);
-  std::array<int, 2> end2d = get2dPos(end, focalLength);
-  auto values = getPoints(start2d, start[1], end2d, end[1]);
-  std::vector<std::array<int,2>> points = std::get<0>(values);
-
-  for (int i = 0; i < points.size(); ++i) {
-    addPoint(buffer, zBuffer, width, height, points[i], 100, '$');
+  void emptyZBuffer() {
+    for (int i = 0; i < width * height; ++i) {
+      zBuffer[i] = 0;
+    }
   }
-}
+
+  void drawBuffer() {
+    for (int i = 0; i < width * height; ++i) {
+      std::cout << buffer[i];
+      if ((i + 1) % width == 0) {
+        std::cout << std::endl;
+      }
+    }
+  }
+
+  void addPoint(std::array<int, 2> point, float ooz /* one over z - for z-buffer */, char letter) {
+    point[1] = -point[1]; // flipped y coord
+    point[0] += (int)(width / 2);
+    point[1] += (int)(height / 2);
+    if (point[0] < width && point[0] >= 0 && point[1] >= 0 && point[1] < height) {
+      if (ooz > zBuffer[width * point[1] + point[0]]) {
+        buffer[width * point[1] + point[0]] = letter;
+        zBuffer[width * point[1] + point[0]] = ooz;
+      }
+    }
+  }
+};
 
 class Triangle {
 public:
@@ -143,7 +151,7 @@ public:
     }
   }
 
-  void draw(char buffer[], float zBuffer[], int width, int height, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength) {
+  void draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength) {
     std::array<std::array<float,3>,3> cameraAdjustedVertices = translateVertices(rotateVertices(vertices, cameraRot[0], cameraRot[1], cameraRot[2]), -cameraPos[0], -cameraPos[1], -cameraPos[2]);
     std::array<int, 2> vertex1 = get2dPos(cameraAdjustedVertices[0], focalLength);
     std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
@@ -199,7 +207,7 @@ public:
           depth = ((x - minX) / (maxX - minX) * (minDepth - maxDepth) + minDepth); // linear interpolation
         }
         float ooz = 1 / depth;
-        addPoint(buffer, zBuffer, width, height, point, ooz, letter);
+        screen.addPoint(point, ooz, letter);
       }
     }
   }
@@ -257,14 +265,12 @@ public:
 
 
 int main() {
-  const float PI = 3.14159265358979323846;
   int width = 60;
   int height = 40;
+
+  Screen mainScreen = Screen(width, height);
+
   int focalLength = 100;
-  char buffer[width * height];
-  float zBuffer[width * height];
-  emptyBuffer(buffer, width, height);
-  emptyBuffer(zBuffer, width, height);
 
   std::array<float, 3> cameraPos = {0, -150, 0};
   std::array<float, 3> cameraRot = {0, 0, PI};
@@ -287,20 +293,20 @@ int main() {
   Triangle trigs[3] = {trig1, trig2, trig3};
 
   while (1) {
-    emptyBuffer(buffer, width, height);
-    emptyBuffer(zBuffer, width, height);
-    clearScreen();
+    mainScreen.emptyBuffer();
+    mainScreen.emptyZBuffer();
 
      for (int i = 0; i < 3; ++i) {
       Triangle trig = trigs[i];
       if (i != 2) trig.rotate(0.1, 0, 0);
       if (i == 2) trig.translate(0, -0.4, 0);
 
-      trig.draw(buffer, zBuffer, width, height, cameraPos, cameraRot, focalLength);
+      trig.draw(mainScreen, cameraPos, cameraRot, focalLength);
       trigs[i] = trig;
     }
 
-    drawBuffer(buffer, width, height);
+    clearScreen();
+    mainScreen.drawBuffer();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
   }
