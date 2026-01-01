@@ -24,12 +24,14 @@ void emptyBuffer(float buffer[], int width, int height) {
   }
 }
 
-std::array<int, 2> get2dPos(std::array<float, 3> pos, std::array<float, 3> cameraPos, int focalLength) {
-  if (cameraPos[1] == pos[1]) {
-    cameraPos[1] += 1;
+std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength) {
+  if (pos[1] == 0) {
+    pos[1] -= 1;
   }
-  int newX = ((cameraPos[0] - pos[0]) * (focalLength) / (cameraPos[1] - pos[1]));
-  int newY = ((cameraPos[2] - pos[2]) * (focalLength) / (cameraPos[1] - pos[1]));
+
+  // camera pos is at (0,0,0) in rendered world.
+  int newX = ((0 - pos[0]) * (focalLength) / (0 - pos[1]));
+  int newY = ((0 - pos[2]) * (focalLength) / (0 - pos[1]));
   std::array<int, 2> newPos = {newX, newY};
   return newPos;
 }
@@ -118,8 +120,8 @@ void addPoint(char buffer[], float zBuffer[], int width, int height, std::array<
 }
 
 void drawLine(char buffer[], float zBuffer[], int width, int height, std::array<float, 3> start, std::array<float, 3> end, std::array<float, 3> cameraPos, int focalLength) {
-  std::array<int, 2> start2d = get2dPos(start, cameraPos, focalLength);
-  std::array<int, 2> end2d = get2dPos(end, cameraPos, focalLength);
+  std::array<int, 2> start2d = get2dPos(start, focalLength);
+  std::array<int, 2> end2d = get2dPos(end, focalLength);
   auto values = getPoints(start2d, start[1], end2d, end[1]);
   std::vector<std::array<int,2>> points = std::get<0>(values);
 
@@ -141,25 +143,26 @@ public:
     }
   }
 
-  void draw(char buffer[], float zBuffer[], int width, int height, std::array<float, 3> cameraPos, int focalLength) {
-    std::array<int, 2> vertex1 = get2dPos(vertices[0], cameraPos, focalLength);
-    std::array<int, 2> vertex2 = get2dPos(vertices[1], cameraPos, focalLength);
-    std::array<int, 2> vertex3 = get2dPos(vertices[2], cameraPos, focalLength);
+  void draw(char buffer[], float zBuffer[], int width, int height, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength) {
+    std::array<std::array<float,3>,3> cameraAdjustedVertices = translateVertices(rotateVertices(vertices, cameraRot[0], cameraRot[1], cameraRot[2]), -cameraPos[0], -cameraPos[1], -cameraPos[2]);
+    std::array<int, 2> vertex1 = get2dPos(cameraAdjustedVertices[0], focalLength);
+    std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
+    std::array<int, 2> vertex3 = get2dPos(cameraAdjustedVertices[2], focalLength);
 
     int top = (int)std::min(vertex1[1], std::min(vertex2[1], vertex3[1]));
     int bottom = (int)std::max(vertex1[1], std::max(vertex2[1], vertex3[1]));
 
-    auto values = getPoints(vertex1, vertices[0][1], vertex2, vertices[1][1]);
+    auto values = getPoints(vertex1, cameraAdjustedVertices[0][1], vertex2, cameraAdjustedVertices[1][1]);
     std::vector<std::array<int,2>> points = std::get<0>(values);
     std::vector<float> depths = std::get<1>(values);
 
-    auto values2 = getPoints(vertex1, vertices[0][1], vertex3, vertices[2][1]);
+    auto values2 = getPoints(vertex1, cameraAdjustedVertices[0][1], vertex3, cameraAdjustedVertices[2][1]);
     std::vector<std::array<int,2>> points2 = std::get<0>(values2);
     std::vector<float> depths2 = std::get<1>(values2);
     points.insert(points.end(), points2.begin(), points2.end());
     depths.insert(depths.end(), depths2.begin(), depths2.end());
 
-    auto values3 = getPoints(vertex3, vertices[2][1], vertex2, vertices[1][1]);
+    auto values3 = getPoints(vertex3, cameraAdjustedVertices[2][1], vertex2, cameraAdjustedVertices[1][1]);
     std::vector<std::array<int,2>> points3 = std::get<0>(values3);
     std::vector<float> depths3 = std::get<1>(values3);
     points.insert(points.end(), points3.begin(), points3.end());
@@ -187,8 +190,6 @@ public:
         }
       }
 
-      minDepth -= cameraPos[1];
-      maxDepth -= cameraPos[1];
       for (int x = minX; x <= maxX; ++x) {
         std::array<int, 2> point = {x, y};
         float depth;
@@ -222,10 +223,41 @@ public:
       vertices[i][2] += z;
     }
   }
+
+  std::array<std::array<float,3>,3> translateVertices(std::array<std::array<float,3>,3> oldVertices, float x, float y, float z) {
+    std::array<std::array<float,3>, 3> newVertices;
+    for (int i = 0; i < 3; ++i) {
+      std::array<float,3> newVertex;
+      newVertex[0] = oldVertices[i][0] + x;
+      newVertex[1] = oldVertices[i][1] + y;
+      newVertex[2] = oldVertices[i][2] + z;
+      newVertices[i] = newVertex;
+    }
+    return newVertices;
+  }
+
+  std::array<std::array<float,3>, 3> rotateVertices(std::array<std::array<float,3>,3> oldVertices, float yaw, float pitch, float roll) {
+    std::array<std::array<float,3>, 3> newVertices;
+    for (int i = 0; i < 3; ++i) {
+      std::array<float,3> newVertex;
+      float x = oldVertices[i][0];
+      float y = oldVertices[i][1];
+      float z = oldVertices[i][2];
+
+      newVertex[0] = x * (std::cos(yaw) * std::cos(pitch)) + y * (std::cos(yaw) * std::sin(pitch) * std::sin(roll) - std::sin(yaw) * std::cos(roll)) + z * (std::cos(yaw) * std::sin(pitch) * std::cos(roll) + std::sin(yaw) * std::sin(roll));
+      newVertex[1] = x * (std::sin(yaw) * std::cos(pitch)) + y * (std::sin(yaw) * std::sin(pitch) * std::sin(roll) + std::cos(yaw) * std::cos(roll)) + z * (std::sin(yaw) * std::sin(pitch) * std::cos(roll) - std::cos(yaw) * std::sin(roll));
+      newVertex[2] = x * (-std::sin(pitch)) + y * (std::cos(pitch) * std::sin(roll)) + z * (std::cos(pitch) * std::cos(roll));
+      
+      newVertices[i] = newVertex;
+    }
+
+    return newVertices;
+  }
 };
 
 
 int main() {
+  const float PI = 3.14159265358979323846;
   int width = 60;
   int height = 40;
   int focalLength = 100;
@@ -234,7 +266,8 @@ int main() {
   emptyBuffer(buffer, width, height);
   emptyBuffer(zBuffer, width, height);
 
-  std::array<float, 3> cameraPos = {0.0f, -150.0f, 0.0f};
+  std::array<float, 3> cameraPos = {0, -150, 0};
+  std::array<float, 3> cameraRot = {0, 0, PI};
   std::array<float, 3> point1 = {0, 0, 0};
   std::array<float, 3> point2 = {0, 0, 8};
   std::array<float, 3> point3 = {std::sqrt(32), -std::sqrt(32), 0};
@@ -263,7 +296,7 @@ int main() {
       if (i != 2) trig.rotate(0.1, 0, 0);
       if (i == 2) trig.translate(0, -0.4, 0);
 
-      trig.draw(buffer, zBuffer, width, height, cameraPos, focalLength);
+      trig.draw(buffer, zBuffer, width, height, cameraPos, cameraRot, focalLength);
       trigs[i] = trig;
     }
 
