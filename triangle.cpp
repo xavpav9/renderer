@@ -1,22 +1,29 @@
 #include "renderer.hpp"
 
-Triangle::Triangle(std::array<std::array<float, 3>, 3> points, char fillLetter) {
+Triangle::Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char> fillLetters) {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       vertices[i][j] = (float)points[i][j];
-      letter = fillLetter;
     }
   }
+  letters = fillLetters; // lightest first
 }
 
-void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength) {
+void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources) {
+  
+  // Calculate new position due to camera position.
+
   std::array<std::array<float,3>,3> cameraAdjustedVertices = rotateVertices(translateVertices(vertices, -cameraPos[0], -cameraPos[1], -cameraPos[2]), -cameraRot[0], -cameraRot[1], -cameraRot[2]);
   std::array<int, 2> vertex1 = get2dPos(cameraAdjustedVertices[0], focalLength);
   std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
   std::array<int, 2> vertex3 = get2dPos(cameraAdjustedVertices[2], focalLength);
 
+  // Calculate highest and lowest y (2d) point of triangle.
+
   int top = std::round(std::min(vertex1[1], std::min(vertex2[1], vertex3[1])));
   int bottom = std::round(std::max(vertex1[1], std::max(vertex2[1], vertex3[1])));
+
+  // Calculate points and depths using getPoints().
 
   auto values = getPoints(vertex1, cameraAdjustedVertices[0][1], vertex2, cameraAdjustedVertices[1][1]);
   std::vector<std::array<int,2>> points = std::get<0>(values);
@@ -34,6 +41,54 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
   points.insert(points.end(), points3.begin(), points3.end());
   depths.insert(depths.end(), depths3.begin(), depths3.end());
 
+  // Calculate Light Strength
+  
+  std::array<float, 3> vectorAB;
+  std::array<float, 3> vectorBC;
+
+  // -> calculate 2 vectors from sides
+  for (int i = 0; i < 3; ++i) {
+    vectorAB[i] = vertices[0][i] - vertices[1][i];
+    vectorBC[i] = vertices[2][i] - vertices[1][i];
+  }
+
+  // -> find the cross product
+  std::array<float, 3> perpendicularVector;
+  for (int i = 0; i < 3; ++i) {
+    perpendicularVector[i] = vectorAB[(i+1) % 3] * vectorBC[(i+2) % 3] - vectorAB[(i+2) % 3] * vectorBC[(i+1) % 3];
+  }
+
+  if (rotateVertex(translateVertex(perpendicularVector, cameraPos[0], cameraPos[1], cameraPos[2]), cameraRot[0], cameraRot[1], cameraRot[2])[1] >= 0) {
+    for (int i = 0; i < 3; ++i) {
+      perpendicularVector[i] = -perpendicularVector[i];
+    }
+  }
+
+  // -> dot product
+  float angle = PI;
+  for (auto lightSource : lightSources) {
+    float dotProduct = 0;
+    for (int i = 0; i < 3; ++i) {
+      dotProduct += (perpendicularVector[i] * lightSource[i]);
+    }
+
+    float perpendicularVectorMagnitude = 0;
+    float lightSourceMagnitude = 0;
+    for (int i = 0; i < 3; ++i) {
+      perpendicularVectorMagnitude += std::pow(perpendicularVector[i],2);
+      lightSourceMagnitude += std::pow(lightSource[i],2);
+    }
+    perpendicularVectorMagnitude = std::sqrt(perpendicularVectorMagnitude);
+    lightSourceMagnitude = std::sqrt(lightSourceMagnitude);
+
+    float newAngle = std::acos((dotProduct) / (perpendicularVectorMagnitude * lightSourceMagnitude));
+    angle = std::min(angle, newAngle);
+  }
+
+  int lightPower = std::min(std::round(angle * (float)letters.size() / PI), (float)letters.size() - 1);
+  char letter = letters[lightPower];
+
+  // fill in the shape with horizontal lines
   for (int y = top; y <= bottom; ++y) { // y referring to up/down (2d)
     int minX = std::numeric_limits<int>::max();
     int maxX = std::numeric_limits<int>::min();
@@ -58,6 +113,8 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
 
     for (int x = minX; x <= maxX; ++x) {
       std::array<int, 2> point = {x, y};
+
+      // get the depth of the point
       float depth;
       if (minX == maxX) {
         depth = minDepth;
@@ -94,11 +151,7 @@ void Triangle::translate(float x, float y, float z) {
 std::array<std::array<float,3>,3> Triangle::translateVertices(std::array<std::array<float,3>,3> oldVertices, float x, float y, float z) {
   std::array<std::array<float,3>, 3> newVertices;
   for (int i = 0; i < 3; ++i) {
-    std::array<float,3> newVertex;
-    newVertex[0] = oldVertices[i][0] + x;
-    newVertex[1] = oldVertices[i][1] + y;
-    newVertex[2] = oldVertices[i][2] + z;
-    newVertices[i] = newVertex;
+    newVertices[i] = translateVertex(oldVertices[i], x, y, z);
   }
   return newVertices;
 }
@@ -106,17 +159,28 @@ std::array<std::array<float,3>,3> Triangle::translateVertices(std::array<std::ar
 std::array<std::array<float,3>, 3> Triangle::rotateVertices(std::array<std::array<float,3>,3> oldVertices, float yaw, float pitch, float roll) {
   std::array<std::array<float,3>, 3> newVertices;
   for (int i = 0; i < 3; ++i) {
-    std::array<float,3> newVertex;
-    float x = oldVertices[i][0];
-    float y = oldVertices[i][1];
-    float z = oldVertices[i][2];
-
-    newVertex[0] = x * (std::cos(yaw) * std::cos(pitch)) + y * (std::cos(yaw) * std::sin(pitch) * std::sin(roll) - std::sin(yaw) * std::cos(roll)) + z * (std::cos(yaw) * std::sin(pitch) * std::cos(roll) + std::sin(yaw) * std::sin(roll));
-    newVertex[1] = x * (std::sin(yaw) * std::cos(pitch)) + y * (std::sin(yaw) * std::sin(pitch) * std::sin(roll) + std::cos(yaw) * std::cos(roll)) + z * (std::sin(yaw) * std::sin(pitch) * std::cos(roll) - std::cos(yaw) * std::sin(roll));
-    newVertex[2] = x * (-std::sin(pitch)) + y * (std::cos(pitch) * std::sin(roll)) + z * (std::cos(pitch) * std::cos(roll));
-    
-    newVertices[i] = newVertex;
+    newVertices[i] = rotateVertex(oldVertices[i], yaw, pitch, roll);
   }
 
   return newVertices;
+}
+
+std::array<float,3> Triangle::translateVertex(std::array<float,3> oldVertex, float x, float y, float z) {
+  std::array<float,3> newVertex;
+  newVertex[0] = oldVertex[0] + x;
+  newVertex[1] = oldVertex[1] + y;
+  newVertex[2] = oldVertex[2] + z;
+  return newVertex;
+}
+
+std::array<float,3> Triangle::rotateVertex(std::array<float,3> oldVertex, float yaw, float pitch, float roll) {
+  std::array<float,3> newVertex;
+  float x = oldVertex[0];
+  float y = oldVertex[1];
+  float z = oldVertex[2];
+
+  newVertex[0] = x * (std::cos(yaw) * std::cos(pitch)) + y * (std::cos(yaw) * std::sin(pitch) * std::sin(roll) - std::sin(yaw) * std::cos(roll)) + z * (std::cos(yaw) * std::sin(pitch) * std::cos(roll) + std::sin(yaw) * std::sin(roll));
+  newVertex[1] = x * (std::sin(yaw) * std::cos(pitch)) + y * (std::sin(yaw) * std::sin(pitch) * std::sin(roll) + std::cos(yaw) * std::cos(roll)) + z * (std::sin(yaw) * std::sin(pitch) * std::cos(roll) - std::cos(yaw) * std::sin(roll));
+  newVertex[2] = x * (-std::sin(pitch)) + y * (std::cos(pitch) * std::sin(roll)) + z * (std::cos(pitch) * std::cos(roll));
+  return newVertex;
 }

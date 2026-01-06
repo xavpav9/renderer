@@ -10,13 +10,15 @@ void clearScreen() {
 class Model {
 public:
   std::vector<Triangle> faces;
-  Model(std::vector<std::array<std::array<float,3>,3>> sides, std::vector<char> letters) {
+  // initialise triangles
+  Model(std::vector<std::array<std::array<float,3>,3>> sides, std::vector<char> fillLetters) {
     for (int i = 0; i < sides.size(); ++i) {
-      Triangle trig(sides[i], letters[i]);
+      Triangle trig(sides[i], fillLetters);
       faces.push_back(trig);
     }
   }
 
+  // rotate each triangle by the rotation angles ( in rad )
   void rotate(float yaw, float pitch, float roll) {
     for (int i = 0; i < faces.size(); ++i) {
       Triangle face = faces[i];
@@ -25,6 +27,7 @@ public:
     }
   }
 
+  // translate each triangle by the translation vector
   void translate(float x, float y, float z) {
     for (int i = 0; i < faces.size(); ++i) {
       Triangle face = faces[i];
@@ -33,41 +36,48 @@ public:
     }
   }
 
-  void draw(Screen& screen, std::array<float,3> cameraPos, std::array<float,3> cameraRot, int focalLength) {
+  // draw each triangle to the screen buffer
+  void draw(Screen& screen, std::array<float,3> cameraPos, std::array<float,3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources) {
     for (int i = 0; i < faces.size(); ++i) {
-      faces[i].draw(screen, cameraPos, cameraRot, focalLength);
+      faces[i].draw(screen, cameraPos, cameraRot, focalLength, lightSources);
     }
   }
 };
 
 int main() {
-  int width = 50;
-  int height = 50;
+  int width = 100;
+  int height = 80;
   Screen mainScreen = Screen(width, height);
 
   std::vector<Model> models;
 
+  // set up light source and camera position
   int focalLength = 100;
-  std::array<float, 3> cameraPos = {0, -300, -10};
-  std::array<float, 3> cameraRot = {0, 0, PI / 20};
+  std::array<float, 3> cameraPos = {0, -200, 0};
+  std::array<float, 3> cameraRot = {0, 0, 0};
 
+  std::array<float, 3> lightSource = {0, 0, 100};
+  std::vector<std::array<float,3>> lightSources = { lightSource };
+
+  // create a cube
   std::array<float, 3> point1;
   std::array<float, 3> point2;
   std::array<float, 3> point3;
   std::array<std::array<float, 3>, 3> face;
 
-  // cube
   std::vector<std::array<std::array<float,3>,3>> faces;
-  std::vector<char> letters;
+  std::vector<char> letters = {'$', '@', 'B', '%', '8', '&', 'W', 'M', '#', '*', 'o', 'a', 'h', 'k', 'b', 'd', 'p', 'q', 'w', 'm', 'Z', 'O', '0', 'Q', 'L', 'C', 'J', 'U', 'Y', 'X', 'z', 'c', 'v', 'u', 'n', 'x', 'r', 'j', 'f', 't', '/', '\\', '|', '(', ')', '1', '{', '}', '[', ']', '?', '-', '_', '+', '~', '<', '>', 'i', '!', 'l', 'I', ';', ':', ',', '\"', '^', '`', '\'', '.' };
 
-  std::array<float,3> c1 = {20, 20, 20};
-  std::array<float,3> c2 = {-20, 20, 20};
-  std::array<float,3> c3 = {20, -20, 20};
-  std::array<float,3> c4 = {-20, -20, 20};
-  std::array<float,3> c5 = {20, 20, -20};
-  std::array<float,3> c6 = {-20, 20, -20};
-  std::array<float,3> c7 = {20, -20, -20};
-  std::array<float,3> c8 = {-20, -20, -20};
+  float sideLength = 30;
+
+  std::array<float,3> c1 = {sideLength, sideLength, sideLength};
+  std::array<float,3> c2 = {-sideLength, sideLength, sideLength};
+  std::array<float,3> c3 = {sideLength, -sideLength, sideLength};
+  std::array<float,3> c4 = {-sideLength, -sideLength, sideLength};
+  std::array<float,3> c5 = {sideLength, sideLength, -sideLength};
+  std::array<float,3> c6 = {-sideLength, sideLength, -sideLength};
+  std::array<float,3> c7 = {sideLength, -sideLength, -sideLength};
+  std::array<float,3> c8 = {-sideLength, -sideLength, -sideLength};
 
   face = {c1, c2, c3};
   faces.push_back(face);
@@ -94,28 +104,21 @@ int main() {
   face = {c5, c6, c8};
   faces.push_back(face);
 
-  for (int i = 0; i < 2; ++i) letters.push_back('@');
-  for (int i = 0; i < 2; ++i) letters.push_back('$');
-  for (int i = 0; i < 2; ++i) letters.push_back('.');
-  for (int i = 0; i < 2; ++i) letters.push_back('~');
-  for (int i = 0; i < 2; ++i) letters.push_back('{');
-  for (int i = 0; i < 2; ++i) letters.push_back('*');
-
-
   Model cube(faces, letters);
 
   models.push_back(cube);
 
 
   while (1) {
+    // render loop
     mainScreen.emptyBuffer();
     mainScreen.emptyZBuffer();
 
      for (int i = 0; i < models.size(); ++i) {
       Model model = models[i];
 
-      model.rotate(0.02, 0.02, 0.02);
-      model.draw(mainScreen, cameraPos, cameraRot, focalLength);
+      model.rotate(0, 0, -0.01);
+      model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
       models[i] = model;
     }

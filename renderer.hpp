@@ -32,12 +32,16 @@ public:
 class Triangle {
 public:
   std::array<std::array<float, 3>, 3> vertices;
-  char letter;
-  Triangle(std::array<std::array<float, 3>, 3> points, char fillLetter); 
-  void draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength);
+  std::vector<char> letters; // lightest first
+  Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char> fillLetters); 
+  void draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources);
   void rotate(float yaw, float roll, float pitch);
   void translate(float x, float y, float z);
+
   std::array<std::array<float,3>, 3> rotateVertices(std::array<std::array<float,3>,3> oldVertices, float yaw, float pitch, float roll);
   std::array<std::array<float,3>,3> translateVertices(std::array<std::array<float,3>,3> oldVertices, float x, float y, float z);
+
+  std::array<float,3> rotateVertex(std::array<float,3> oldVertex, float yaw, float pitch, float roll);
+  std::array<float,3> translateVertex(std::array<float,3> oldVertex, float x, float y, float z);
 };
 

@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 
+// uses similar triangles to get the projection of a 2d position on a screen
 std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength) {
   if (pos[1] == 0) {
     pos[1] -= 1;
@@ -12,6 +13,8 @@ std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength) {
   return newPos;
 }
 
+// uses the Bresenham line algorithm to find the points on a 2d screen which a 2d line goes through.
+// it also records the depth of each point for the zbuffer
 std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::array<int, 2> startPos, float startDepth, std::array<int, 2> endPos, float endDepth) {
   std::vector<std::array<int,2>> points;
   std::vector<float> depths;
