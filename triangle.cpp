@@ -9,7 +9,7 @@ Triangle::Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char>
   letters = fillLetters; // lightest first
 }
 
-void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources) {
+void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,4>> lightSources) {
   
   // Calculate new position due to camera position.
   std::array<std::array<float,3>,3> cameraAdjustedVertices = rotateVertices(translateVertices(vertices, -cameraPos[0], -cameraPos[1], -cameraPos[2]), -cameraRot[0], -cameraRot[1], -cameraRot[2]);
@@ -43,14 +43,18 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
   depths.insert(depths.end(), depths3.begin(), depths3.end());
 
   // Calculate Light Strength
+
+  std::array<float, 3> vectorA = cameraAdjustedVertices[0];
+  std::array<float, 3> vectorB = cameraAdjustedVertices[1];
+  std::array<float, 3> vectorC = cameraAdjustedVertices[2];
   
   std::array<float, 3> vectorAB;
   std::array<float, 3> vectorBC;
 
   // -> calculate 2 vectors from sides
   for (int i = 0; i < 3; ++i) {
-    vectorAB[i] = vertices[0][i] - vertices[1][i];
-    vectorBC[i] = vertices[2][i] - vertices[1][i];
+    vectorAB[i] = vectorA[i] - vectorB[i];
+    vectorBC[i] = vectorC[i] - vectorB[i];
   }
 
   // -> find the cross product
@@ -59,35 +63,55 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
     perpendicularVector[i] = vectorAB[(i+1) % 3] * vectorBC[(i+2) % 3] - vectorAB[(i+2) % 3] * vectorBC[(i+1) % 3];
   }
 
-  if (rotateVertex(translateVertex(perpendicularVector, cameraPos[0], cameraPos[1], cameraPos[2]), cameraRot[0], cameraRot[1], cameraRot[2])[1] >= 0) {
+  if (perpendicularVector[1] >= 0) {
     for (int i = 0; i < 3; ++i) {
       perpendicularVector[i] = -perpendicularVector[i];
     }
   }
 
-  // -> dot product
-  float angle = PI;
+  // -> dot product in order to get angle
+  float lightStrength = (float)letters.size() - 1;
   for (auto lightSource : lightSources) {
+    std::array<float, 3> lightPos;
+    for (int i = 0; i < 3; ++i) {
+      lightPos[i] = lightSource[i];
+    }
+    std::array<float, 3> cameraAdjustedLightSource = rotateVertex(translateVertex(lightPos, -cameraPos[0], -cameraPos[1], -cameraPos[2]), -cameraRot[0], -cameraRot[1], -cameraRot[2]);
+
+    // get vector
+    std::array<float, 3> lightVector;
+    for (int i = 0; i < 3; ++i) {
+      lightVector[i] = cameraAdjustedLightSource[i] - vectorB[i];
+    }
+
     float dotProduct = 0;
     for (int i = 0; i < 3; ++i) {
-      dotProduct += (perpendicularVector[i] * lightSource[i]);
+      dotProduct += (perpendicularVector[i] * lightVector[i]);
     }
 
     float perpendicularVectorMagnitude = 0;
     float lightSourceMagnitude = 0;
     for (int i = 0; i < 3; ++i) {
       perpendicularVectorMagnitude += std::pow(perpendicularVector[i],2);
-      lightSourceMagnitude += std::pow(lightSource[i],2);
+      lightSourceMagnitude += std::pow(lightVector[i],2);
     }
     perpendicularVectorMagnitude = std::sqrt(perpendicularVectorMagnitude);
     lightSourceMagnitude = std::sqrt(lightSourceMagnitude);
 
-    float newAngle = std::acos((dotProduct) / (perpendicularVectorMagnitude * lightSourceMagnitude));
-    angle = std::min(angle, newAngle);
+    // calculate the lightstrength using basic formula I made up
+    float angle = std::acos((dotProduct) / (perpendicularVectorMagnitude * lightSourceMagnitude));
+    if (angle < PI / 2) {
+      float change = (angle / (PI / 2)) / lightSource[3] * (lightSourceMagnitude / 1000);
+      if (change < 1) {
+        lightStrength *= change;
+      }
+      // lightSource[3] is the strength of the light
+      // lightSourceMagnitude is also the distance from B to the lightSource
+    }
   }
 
-  int lightPower = std::min(std::round(angle * (float)letters.size() / PI), (float)letters.size() - 1);
-  char letter = letters[lightPower];
+  int lightPowerIndex = std::round(lightStrength);
+  char letter = letters[lightPowerIndex];
 
   // fill in the shape with horizontal lines
   for (int y = top; y <= bottom; ++y) { // y referring to up/down (2d)

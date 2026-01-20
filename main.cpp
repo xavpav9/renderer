@@ -37,7 +37,7 @@ public:
   }
 
   // draw each triangle to the screen buffer
-  void draw(Screen& screen, std::array<float,3> cameraPos, std::array<float,3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources) {
+  void draw(Screen& screen, std::array<float,3> cameraPos, std::array<float,3> cameraRot, int focalLength, std::vector<std::array<float,4>> lightSources) {
     for (int i = 0; i < faces.size(); ++i) {
       faces[i].draw(screen, cameraPos, cameraRot, focalLength, lightSources);
     }
@@ -93,8 +93,8 @@ Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char> 
 // */
 
 int main() {
-  int width = 20;
-  int height = 20;
+  int width = 80;
+  int height = 80;
   Screen mainScreen = Screen(width, height);
 
   std::vector<Model> models;
@@ -104,16 +104,17 @@ int main() {
   std::array<float, 3> cameraPos = {0, -400, 0};
   std::array<float, 3> cameraRot = {0, 0, 0};
 
-  std::array<float, 3> lightSource = {0, -200, 0};
-  std::vector<std::array<float,3>> lightSources = { lightSource };
+  std::array<float, 4> lightSource = { 0, -200, 0, 0.4 };
+  std::array<float, 4> lightSource2 = { 200, 0, 0, 1 };
+  std::vector<std::array<float,4>> lightSources = { lightSource, lightSource2 };
 
   std::vector<char> letters = {'@', '%', '#', '*', '+', '=', '-', ':', '.'};
   // std::vector<char> letters = {'$', '@', 'B', '%', '8', '&', 'W', 'M', '#', '*', 'o', 'a', 'h', 'k', 'b', 'd', 'p', 'q', 'w', 'm', 'Z', 'O', '0', 'Q', 'L', 'C', 'J', 'U', 'Y', 'X', 'z', 'c', 'v', 'u', 'n', 'x', 'r', 'j', 'f', 't', '/', '\\', '|', '(', ')', '1', '{', '}', '[', ']', '?', '-', '_', '+', '~', '<', '>', 'i', '!', 'l', 'I', ';', ':', ',', '\"', '^', '`', '\'', '.'};
 
-  float sideLength = 10;
-  std::array<float, 3> centre = { 0, 0, -10 };
+  float sideLength = 20;
+  std::array<float, 3> centre = { 0, 0, -60 };
   Model cube = makeCube(centre, sideLength, letters);
-  std::array<float, 3> centre2 = { 0, 0, 30 };
+  std::array<float, 3> centre2 = { 0, 0, 60 };
   Model cube2 = makeCube(centre2, sideLength, letters);
 
   models.push_back(cube);
@@ -137,7 +138,7 @@ int main() {
     for (int i = 0; i < models.size(); ++i) {
       Model model = models[i];
 
-      model.rotate(0.01, 0, 0);
+      model.rotate(0.1, 0.1, 0.1);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
       models[i] = model;

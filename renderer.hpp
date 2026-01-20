@@ -34,7 +34,7 @@ public:
   std::array<std::array<float, 3>, 3> vertices;
   std::vector<char> letters; // lightest first
   Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char> fillLetters); 
-  void draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources);
+  void draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,4>> lightSources);
   void rotate(float yaw, float roll, float pitch);
   void translate(float x, float y, float z);
 
