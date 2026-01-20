@@ -11,9 +11,9 @@ class Model {
 public:
   std::vector<Triangle> faces;
   // initialise triangles
-  Model(std::vector<std::array<std::array<float,3>,3>> sides, std::vector<char>& fillLetters) {
+  Model(std::vector<std::array<std::array<float,3>,3>> sides, std::vector<char>& fillLetters, std::vector<std::string>& colours) {
     for (int i = 0; i < sides.size(); ++i) {
-      Triangle trig(sides[i], fillLetters);
+      Triangle trig(sides[i], fillLetters, colours[i]);
       faces.push_back(trig);
     }
   }
@@ -45,7 +45,7 @@ public:
 };
 
 // /*
-Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char> letters) {
+Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char>& letters, std::vector<std::string>& colours) {
   // create a cube
   std::array<std::array<float, 3>, 3> face;
 
@@ -85,7 +85,7 @@ Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char> 
   face = {c5, c6, c8};
   faces.push_back(face);
 
-  Model cube(faces, letters);
+  Model cube(faces, letters, colours);
 
   return cube;
 }
@@ -93,7 +93,7 @@ Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char> 
 // */
 
 int main() {
-  int width = 80;
+  int width = 120;
   int height = 80;
   Screen mainScreen = Screen(width, height);
 
@@ -110,25 +110,19 @@ int main() {
 
   std::vector<char> letters = {'@', '%', '#', '*', '+', '=', '-', ':', '.'};
   // std::vector<char> letters = {'$', '@', 'B', '%', '8', '&', 'W', 'M', '#', '*', 'o', 'a', 'h', 'k', 'b', 'd', 'p', 'q', 'w', 'm', 'Z', 'O', '0', 'Q', 'L', 'C', 'J', 'U', 'Y', 'X', 'z', 'c', 'v', 'u', 'n', 'x', 'r', 'j', 'f', 't', '/', '\\', '|', '(', ')', '1', '{', '}', '[', ']', '?', '-', '_', '+', '~', '<', '>', 'i', '!', 'l', 'I', ';', ':', ',', '\"', '^', '`', '\'', '.'};
+  std::vector<std::string> colours = {"\033[31m", "\033[31m", "\033[32m", "\033[32m", "\033[33m", "\033[33m", "\033[34m", "\033[34m", "\033[35m", "\033[35m", "\033[36m", "\033[36m"};
+  std::vector<std::string> colours2 = {"\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m", "\033[31m"};
 
   float sideLength = 20;
-  std::array<float, 3> centre = { 0, 0, -60 };
-  Model cube = makeCube(centre, sideLength, letters);
-  std::array<float, 3> centre2 = { 0, 0, 60 };
-  Model cube2 = makeCube(centre2, sideLength, letters);
+  std::array<float, 3> centre = { -40, 0, 0 };
+  Model cube = makeCube(centre, sideLength, letters, colours);
+
+  sideLength = 30;
+  std::array<float, 3> centre2 = { 80, 0, 0 };
+  Model cube2 = makeCube(centre2, sideLength, letters, colours2);
 
   models.push_back(cube);
   models.push_back(cube2);
-
-
-  /*
-  // square
-
-  std::array<float, 3> point1;
-  std::array<float, 3> point2;
-  std::array<float, 3> point3;
-
-  */
 
   while (1) {
     // render loop
@@ -139,6 +133,7 @@ int main() {
       Model model = models[i];
 
       model.rotate(0.1, 0.1, 0.1);
+      model.translate(0, 0, 0);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
       models[i] = model;

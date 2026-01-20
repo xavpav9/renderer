@@ -19,21 +19,22 @@ class Screen {
 public:
   int width;
   int height;
-  std::vector<char> buffer;
+  std::vector<std::string> buffer;
   std::vector<float> zBuffer;
 
   Screen(int w, int h);
   void emptyBuffer();
   void emptyZBuffer();
   void drawBuffer();
-  void addPoint(std::array<int, 2> point, float ooz, char letter);
+  void addPoint(std::array<int, 2> point, float ooz, char letter, std::string colour);
 };
 
 class Triangle {
 public:
   std::array<std::array<float, 3>, 3> vertices;
   std::vector<char> letters; // lightest first
-  Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char> fillLetters); 
+  std::string colour;
+  Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char>& fillLetters, std::string triangleColour); 
   void draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,4>> lightSources);
   void rotate(float yaw, float roll, float pitch);
   void translate(float x, float y, float z);

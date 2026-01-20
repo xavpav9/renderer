@@ -1,12 +1,13 @@
 #include "renderer.hpp"
 
-Triangle::Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char> fillLetters) {
+Triangle::Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char>& fillLetters, std::string triangleColour) {
   for (int i = 0; i < 3; ++i) {
     for (int j = 0; j < 3; ++j) {
       vertices[i][j] = (float)points[i][j];
     }
   }
   letters = fillLetters; // lightest first
+  colour = triangleColour;
 }
 
 void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,4>> lightSources) {
@@ -148,7 +149,7 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
       }
 
       float ooz = 1 / depth;
-      screen.addPoint(point, ooz, letter);
+      screen.addPoint(point, ooz, letter, colour);
     }
   }
 }
