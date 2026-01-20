@@ -11,7 +11,7 @@ class Model {
 public:
   std::vector<Triangle> faces;
   // initialise triangles
-  Model(std::vector<std::array<std::array<float,3>,3>> sides, std::vector<char> fillLetters) {
+  Model(std::vector<std::array<std::array<float,3>,3>> sides, std::vector<char>& fillLetters) {
     for (int i = 0; i < sides.size(); ++i) {
       Triangle trig(sides[i], fillLetters);
       faces.push_back(trig);
@@ -44,40 +44,21 @@ public:
   }
 };
 
-int main() {
-  int width = 100;
-  int height = 80;
-  Screen mainScreen = Screen(width, height);
-
-  std::vector<Model> models;
-
-  // set up light source and camera position
-  int focalLength = 100;
-  std::array<float, 3> cameraPos = {0, -200, 0};
-  std::array<float, 3> cameraRot = {0, 0, 0};
-
-  std::array<float, 3> lightSource = {0, 0, 100};
-  std::vector<std::array<float,3>> lightSources = { lightSource };
-
+// /*
+Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char> letters) {
   // create a cube
-  std::array<float, 3> point1;
-  std::array<float, 3> point2;
-  std::array<float, 3> point3;
   std::array<std::array<float, 3>, 3> face;
 
   std::vector<std::array<std::array<float,3>,3>> faces;
-  std::vector<char> letters = {'$', '@', 'B', '%', '8', '&', 'W', 'M', '#', '*', 'o', 'a', 'h', 'k', 'b', 'd', 'p', 'q', 'w', 'm', 'Z', 'O', '0', 'Q', 'L', 'C', 'J', 'U', 'Y', 'X', 'z', 'c', 'v', 'u', 'n', 'x', 'r', 'j', 'f', 't', '/', '\\', '|', '(', ')', '1', '{', '}', '[', ']', '?', '-', '_', '+', '~', '<', '>', 'i', '!', 'l', 'I', ';', ':', ',', '\"', '^', '`', '\'', '.' };
 
-  float sideLength = 30;
-
-  std::array<float,3> c1 = {sideLength, sideLength, sideLength};
-  std::array<float,3> c2 = {-sideLength, sideLength, sideLength};
-  std::array<float,3> c3 = {sideLength, -sideLength, sideLength};
-  std::array<float,3> c4 = {-sideLength, -sideLength, sideLength};
-  std::array<float,3> c5 = {sideLength, sideLength, -sideLength};
-  std::array<float,3> c6 = {-sideLength, sideLength, -sideLength};
-  std::array<float,3> c7 = {sideLength, -sideLength, -sideLength};
-  std::array<float,3> c8 = {-sideLength, -sideLength, -sideLength};
+  std::array<float,3> c1 = {sideLength + centre[0], sideLength + centre[1], sideLength + centre[2]};
+  std::array<float,3> c2 = {-sideLength + centre[0], sideLength + centre[1], sideLength + centre[2]};
+  std::array<float,3> c3 = {sideLength + centre[0], -sideLength + centre[1], sideLength + centre[2]};
+  std::array<float,3> c4 = {-sideLength + centre[0], -sideLength + centre[1], sideLength + centre[2]};
+  std::array<float,3> c5 = {sideLength + centre[0], sideLength + centre[1], -sideLength + centre[2]};
+  std::array<float,3> c6 = {-sideLength + centre[0], sideLength + centre[1], -sideLength + centre[2]};
+  std::array<float,3> c7 = {sideLength + centre[0], -sideLength + centre[1], -sideLength + centre[2]};
+  std::array<float,3> c8 = {-sideLength + centre[0], -sideLength + centre[1], -sideLength + centre[2]};
 
   face = {c1, c2, c3};
   faces.push_back(face);
@@ -106,18 +87,57 @@ int main() {
 
   Model cube(faces, letters);
 
-  models.push_back(cube);
+  return cube;
+}
 
+// */
+
+int main() {
+  int width = 20;
+  int height = 20;
+  Screen mainScreen = Screen(width, height);
+
+  std::vector<Model> models;
+
+  // set up light source and camera position
+  int focalLength = 100;
+  std::array<float, 3> cameraPos = {0, -400, 0};
+  std::array<float, 3> cameraRot = {0, 0, 0};
+
+  std::array<float, 3> lightSource = {0, -200, 0};
+  std::vector<std::array<float,3>> lightSources = { lightSource };
+
+  std::vector<char> letters = {'@', '%', '#', '*', '+', '=', '-', ':', '.'};
+  // std::vector<char> letters = {'$', '@', 'B', '%', '8', '&', 'W', 'M', '#', '*', 'o', 'a', 'h', 'k', 'b', 'd', 'p', 'q', 'w', 'm', 'Z', 'O', '0', 'Q', 'L', 'C', 'J', 'U', 'Y', 'X', 'z', 'c', 'v', 'u', 'n', 'x', 'r', 'j', 'f', 't', '/', '\\', '|', '(', ')', '1', '{', '}', '[', ']', '?', '-', '_', '+', '~', '<', '>', 'i', '!', 'l', 'I', ';', ':', ',', '\"', '^', '`', '\'', '.'};
+
+  float sideLength = 10;
+  std::array<float, 3> centre = { 0, 0, -10 };
+  Model cube = makeCube(centre, sideLength, letters);
+  std::array<float, 3> centre2 = { 0, 0, 30 };
+  Model cube2 = makeCube(centre2, sideLength, letters);
+
+  models.push_back(cube);
+  models.push_back(cube2);
+
+
+  /*
+  // square
+
+  std::array<float, 3> point1;
+  std::array<float, 3> point2;
+  std::array<float, 3> point3;
+
+  */
 
   while (1) {
     // render loop
     mainScreen.emptyBuffer();
     mainScreen.emptyZBuffer();
 
-     for (int i = 0; i < models.size(); ++i) {
+    for (int i = 0; i < models.size(); ++i) {
       Model model = models[i];
 
-      model.rotate(0, 0, -0.01);
+      model.rotate(0.01, 0, 0);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
       models[i] = model;
@@ -126,7 +146,7 @@ int main() {
     clearScreen();
     mainScreen.drawBuffer();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(40));
   }
 
   return 0;

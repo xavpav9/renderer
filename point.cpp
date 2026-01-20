@@ -33,6 +33,7 @@ std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::ar
   float initialDepth;
   float finishDepth;
 
+  // find which pos is first
   if (startPos[axis] <= endPos[axis]) {
     for (int i = 0; i < 2; ++i) {
       initialPos[i] = startPos[i];
@@ -49,6 +50,7 @@ std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::ar
     }
   }
 
+  // find point coordinates and depths
   if (axis == 0) {
     for (int x = initialPos[0]; x <= finishPos[0]; ++x) {
       int y = std::round(gradient * (x - initialPos[0]) + initialPos[1]);

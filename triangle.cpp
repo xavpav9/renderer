@@ -12,11 +12,12 @@ Triangle::Triangle(std::array<std::array<float, 3>, 3> points, std::vector<char>
 void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<float, 3> cameraRot, int focalLength, std::vector<std::array<float,3>> lightSources) {
   
   // Calculate new position due to camera position.
-
   std::array<std::array<float,3>,3> cameraAdjustedVertices = rotateVertices(translateVertices(vertices, -cameraPos[0], -cameraPos[1], -cameraPos[2]), -cameraRot[0], -cameraRot[1], -cameraRot[2]);
   std::array<int, 2> vertex1 = get2dPos(cameraAdjustedVertices[0], focalLength);
   std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
   std::array<int, 2> vertex3 = get2dPos(cameraAdjustedVertices[2], focalLength);
+
+  if (std::max(cameraAdjustedVertices[0][1], std::max(cameraAdjustedVertices[1][1], cameraAdjustedVertices[2][1])) < 0) return;
 
   // Calculate highest and lowest y (2d) point of triangle.
 
@@ -182,5 +183,6 @@ std::array<float,3> Triangle::rotateVertex(std::array<float,3> oldVertex, float 
   newVertex[0] = x * (std::cos(yaw) * std::cos(pitch)) + y * (std::cos(yaw) * std::sin(pitch) * std::sin(roll) - std::sin(yaw) * std::cos(roll)) + z * (std::cos(yaw) * std::sin(pitch) * std::cos(roll) + std::sin(yaw) * std::sin(roll));
   newVertex[1] = x * (std::sin(yaw) * std::cos(pitch)) + y * (std::sin(yaw) * std::sin(pitch) * std::sin(roll) + std::cos(yaw) * std::cos(roll)) + z * (std::sin(yaw) * std::sin(pitch) * std::cos(roll) - std::cos(yaw) * std::sin(roll));
   newVertex[2] = x * (-std::sin(pitch)) + y * (std::cos(pitch) * std::sin(roll)) + z * (std::cos(pitch) * std::cos(roll));
+
   return newVertex;
 }
