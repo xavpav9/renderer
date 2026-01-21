@@ -93,7 +93,7 @@ Model makeCube(std::array<float, 3> centre, float sideLength, std::vector<char>&
 // */
 
 int main() {
-  int width = 120;
+  int width = 200;
   int height = 80;
   Screen mainScreen = Screen(width, height);
 
@@ -101,7 +101,7 @@ int main() {
 
   // set up light source and camera position
   int focalLength = 100;
-  std::array<float, 3> cameraPos = {0, -120, 0};
+  std::array<float, 3> cameraPos = {0, -60, 0};
   std::array<float, 3> cameraRot = {0, 0, 0};
 
   std::array<float, 4> lightSource = { 0, -2000, 0, 3 };
@@ -121,10 +121,19 @@ int main() {
   std::array<float, 3> centre2 = { 80, 0, 0 };
   Model cube2 = makeCube(centre2, sideLength, letters, colours2);
 
+  sideLength = 25;
+  std::array<float, 3> centre3 = { 0, 60, 0 };
+  Model cube3 = makeCube(centre3, sideLength, letters, colours);
+
   models.push_back(cube);
   models.push_back(cube2);
+  models.push_back(cube3);
 
+  float fps = 30;
+
+  int frameTime = 1000 / fps;
   while (1) {
+    auto start = std::chrono::system_clock::now();
     // render loop
     mainScreen.emptyBuffer();
     mainScreen.emptyZBuffer();
@@ -139,10 +148,18 @@ int main() {
       models[i] = model;
     }
 
+    auto end = std::chrono::system_clock::now();
+
+    auto duration = start.time_since_epoch() - end.time_since_epoch();
+    int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+    int wait = frameTime - milliseconds;
+    if (wait > 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+    }
+
     clearScreen();
     mainScreen.drawBuffer();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(40));
   }
 
   return 0;

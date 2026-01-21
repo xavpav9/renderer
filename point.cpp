@@ -2,14 +2,17 @@
 
 // uses similar triangles to get the projection of a 2d position on a screen
 std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength) {
-  if (pos[1] == 0) {
-    pos[1] -= 1;
+  std::array<int, 2> newPos;
+  if (pos[1] <= 0) {
+    newPos[0] = pos[0] * focalLength;
+    newPos[1] = pos[2] * focalLength;
+  } else {
+    // camera pos is at (0,0,0) in rendered world.
+    int newX = ((0 - pos[0]) * (focalLength) / (0 - pos[1]));
+    int newY = ((0 - pos[2]) * (focalLength) / (0 - pos[1]));
+    newPos[0] = newX;
+    newPos[1] = newY;
   }
-
-  // camera pos is at (0,0,0) in rendered world.
-  int newX = ((0 - pos[0]) * (focalLength) / (0 - pos[1]));
-  int newY = ((0 - pos[2]) * (focalLength) / (0 - pos[1]));
-  std::array<int, 2> newPos = {newX, newY};
   return newPos;
 }
 
