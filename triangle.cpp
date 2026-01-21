@@ -18,12 +18,22 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
   std::array<int, 2> vertex2 = get2dPos(cameraAdjustedVertices[1], focalLength);
   std::array<int, 2> vertex3 = get2dPos(cameraAdjustedVertices[2], focalLength);
 
-  if (std::max(cameraAdjustedVertices[0][1], std::max(cameraAdjustedVertices[1][1], cameraAdjustedVertices[2][1])) < 0) return;
+  bool vertex1InScreen = screen.isInScreen(vertex1);
+  bool vertex2InScreen = screen.isInScreen(vertex2);
+  bool vertex3InScreen = screen.isInScreen(vertex3);
+
+  if (std::max(cameraAdjustedVertices[0][1], std::max(cameraAdjustedVertices[1][1], cameraAdjustedVertices[2][1])) < 0 || (!vertex1InScreen && !vertex2InScreen && !vertex3InScreen)) return;
 
   // Calculate highest and lowest y (2d) point of triangle.
 
   int top = std::round(std::min(vertex1[1], std::min(vertex2[1], vertex3[1])));
   int bottom = std::round(std::max(vertex1[1], std::max(vertex2[1], vertex3[1])));
+
+  std::array topVertex = {0, top};
+  std::array bottomVertex = {0, bottom};
+  if (!screen.isInScreen(topVertex) && top < 0) top = -screen.height / 2;
+  if (!screen.isInScreen(bottomVertex) && bottom < 0) bottom = screen.height / 2;
+
 
   // Calculate points and depths using getPoints().
 

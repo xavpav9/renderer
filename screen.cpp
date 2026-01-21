@@ -34,6 +34,11 @@ void Screen::drawBuffer() {
   }
 }
 
+bool Screen::isInScreen(std::array<int, 2> vertex) {
+  if (std::abs(vertex[0]) > width / 2 || std::abs(vertex[1]) > height / 2) return false;
+  else return true;
+}
+
 // Adds a point to the buffer depending on its ooz
 void Screen::addPoint(std::array<int, 2> point, float ooz /* one over z - for z-buffer */, char letter, std::string colour) {
   point[1] = -point[1]; // flipped y coord

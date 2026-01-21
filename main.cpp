@@ -101,11 +101,11 @@ int main() {
 
   // set up light source and camera position
   int focalLength = 100;
-  std::array<float, 3> cameraPos = {0, -400, 0};
+  std::array<float, 3> cameraPos = {0, -120, 0};
   std::array<float, 3> cameraRot = {0, 0, 0};
 
-  std::array<float, 4> lightSource = { 0, -200, 0, 0.4 };
-  std::array<float, 4> lightSource2 = { 200, 0, 0, 1 };
+  std::array<float, 4> lightSource = { 0, -2000, 0, 3 };
+  std::array<float, 4> lightSource2 = { 2000, 0, 0, 0 };
   std::vector<std::array<float,4>> lightSources = { lightSource, lightSource2 };
 
   std::vector<char> letters = {'@', '%', '#', '*', '+', '=', '-', ':', '.'};
@@ -133,7 +133,7 @@ int main() {
       Model model = models[i];
 
       model.rotate(0.1, 0.1, 0.1);
-      model.translate(0, 0, 0);
+      //model.translate(0, -3, 0);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
       models[i] = model;
