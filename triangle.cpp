@@ -35,17 +35,17 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
 
   // Calculate points and depths using getPoints().
 
-  auto values = getPoints(vertex1, cameraAdjustedVertices[0][1], vertex2, cameraAdjustedVertices[1][1]);
+  auto values = getPoints(screen, vertex1, cameraAdjustedVertices[0][1], vertex2, cameraAdjustedVertices[1][1]);
   std::vector<std::array<int,2>> points = std::get<0>(values);
   std::vector<float> depths = std::get<1>(values);
 
-  auto values2 = getPoints(vertex1, cameraAdjustedVertices[0][1], vertex3, cameraAdjustedVertices[2][1]);
+  auto values2 = getPoints(screen, vertex1, cameraAdjustedVertices[0][1], vertex3, cameraAdjustedVertices[2][1]);
   std::vector<std::array<int,2>> points2 = std::get<0>(values2);
   std::vector<float> depths2 = std::get<1>(values2);
   points.insert(points.end(), points2.begin(), points2.end());
   depths.insert(depths.end(), depths2.begin(), depths2.end());
 
-  auto values3 = getPoints(vertex3, cameraAdjustedVertices[2][1], vertex2, cameraAdjustedVertices[1][1]);
+  auto values3 = getPoints(screen, vertex3, cameraAdjustedVertices[2][1], vertex2, cameraAdjustedVertices[1][1]);
   std::vector<std::array<int,2>> points3 = std::get<0>(values3);
   std::vector<float> depths3 = std::get<1>(values3);
   points.insert(points.end(), points3.begin(), points3.end());

@@ -18,7 +18,7 @@ std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength) {
 
 // uses the Bresenham line algorithm to find the points on a 2d screen which a 2d line goes through.
 // it also records the depth of each point for the zbuffer
-std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::array<int, 2> startPos, float startDepth, std::array<int, 2> endPos, float endDepth) {
+std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(Screen& screen, std::array<int, 2> startPos, float startDepth, std::array<int, 2> endPos, float endDepth) {
   std::vector<std::array<int,2>> points;
   std::vector<float> depths;
 
@@ -52,10 +52,27 @@ std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::ar
       finishDepth = startDepth;
     }
   }
+  int screenHeight = screen.height;
+  if ((std::max(initialPos[1], finishPos[1]) < -screenHeight / 2) || (std::min(initialPos[1], finishPos[1]) > screenHeight / 2)) return { points, depths };
 
   // find point coordinates and depths
   if (axis == 0) {
-    for (int x = initialPos[0]; x <= finishPos[0]; ++x) {
+    int start;
+    int end;
+
+    if (initialPos[1] < -screenHeight / 2 && gradient != 0) {
+      start = (-screenHeight/2-initialPos[1])/gradient+initialPos[0];
+    } else {
+      start = initialPos[0];
+    }
+
+    if (finishPos[1] > screenHeight / 2 && gradient != 0) {
+      end = (screenHeight/2-initialPos[1])/gradient+initialPos[0];
+    } else {
+      end = finishPos[0];
+    }
+
+    for (int x = start; x <= end; ++x) {
       int y = std::round(gradient * (x - initialPos[0]) + initialPos[1]);
       std::array<int, 2> point = {x, y};
       points.push_back(point);
@@ -69,7 +86,10 @@ std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::ar
       depths.push_back(depth);
     }
   } else {
-    for (int y = initialPos[1]; y <= finishPos[1]; ++y) {
+    int start = std::max(-screenHeight / 2, initialPos[1]);
+    int end = std::min(screenHeight / 2, finishPos[1]);
+
+    for (int y = start; y <= end; ++y) {
       int x = std::round((y - initialPos[1]) / gradient + initialPos[0]);
       std::array<int, 2> point = {x, y};
       points.push_back(point);

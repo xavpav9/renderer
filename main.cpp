@@ -99,10 +99,11 @@ int main() {
 
   std::vector<Model> models;
 
-  // set up light source and camera position
+  // set up light source and camera position and fps
   int focalLength = 100;
-  std::array<float, 3> cameraPos = {0, -60, 0};
+  std::array<float, 3> cameraPos = {0, -200, 0};
   std::array<float, 3> cameraRot = {0, 0, 0};
+  float fps = 20;
 
   std::array<float, 4> lightSource = { 0, -2000, 0, 3 };
   std::array<float, 4> lightSource2 = { 2000, 0, 0, 0 };
@@ -129,8 +130,6 @@ int main() {
   models.push_back(cube2);
   models.push_back(cube3);
 
-  float fps = 30;
-
   int frameTime = 1000 / fps;
   while (1) {
     auto start = std::chrono::system_clock::now();
@@ -141,7 +140,18 @@ int main() {
     for (int i = 0; i < models.size(); ++i) {
       Model model = models[i];
 
-      model.rotate(0.1, 0.1, 0.1);
+      switch (i) {
+        case 0:
+          model.rotate(0, 0, 0.2);
+          break;
+        case 1:
+          model.rotate(0, 0.1, 0);
+          break;
+        case 2:
+          model.rotate(0.3, 0, 0);
+          break;
+      }
+      //model.rotate(0.1, 0.1, 0.1);
       //model.translate(0, -3, 0);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
@@ -150,7 +160,7 @@ int main() {
 
     auto end = std::chrono::system_clock::now();
 
-    auto duration = start.time_since_epoch() - end.time_since_epoch();
+    auto duration = end.time_since_epoch() - start.time_since_epoch();
     int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
 
     int wait = frameTime - milliseconds;
@@ -160,6 +170,7 @@ int main() {
 
     clearScreen();
     mainScreen.drawBuffer();
+    std::cout << "FPS: " << (int)(1000/milliseconds) << std::endl;
   }
 
   return 0;

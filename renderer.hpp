@@ -11,10 +11,6 @@ const float PI = 3.14159265358979323846;
 
 void clearScreen();
 
-std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength);
-
-std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(std::array<int, 2> startPos, float startDepth, std::array<int, 2> endPos, float endDepth);
-
 class Screen {
 public:
   int width;
@@ -47,3 +43,6 @@ public:
   std::array<float,3> translateVertex(std::array<float,3> oldVertex, float x, float y, float z);
 };
 
+std::array<int, 2> get2dPos(std::array<float, 3> pos, int focalLength);
+
+std::tuple<std::vector<std::array<int,2>>, std::vector<float>> getPoints(Screen& screen, std::array<int, 2> startPos, float startDepth, std::array<int, 2> endPos, float endDepth);
