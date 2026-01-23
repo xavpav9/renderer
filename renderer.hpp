@@ -23,7 +23,7 @@ public:
   void emptyZBuffer();
   void drawBuffer();
   bool isInScreen(std::array<int, 2> vertex);
-  void addPoint(std::array<int, 2> point, float ooz, char letter, std::string colour);
+  void addPoint(std::array<int, 2> point, float ooz, char letter, std::string colour, float averageOoz);
 };
 
 class Triangle {

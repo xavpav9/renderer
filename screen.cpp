@@ -40,15 +40,21 @@ bool Screen::isInScreen(std::array<int, 2> vertex) {
 }
 
 // Adds a point to the buffer depending on its ooz
-void Screen::addPoint(std::array<int, 2> point, float ooz /* one over z - for z-buffer */, char letter, std::string colour) {
+void Screen::addPoint(std::array<int, 2> point, float ooz /* one over z - for z-buffer */, char letter, std::string colour, float averageOoz) {
   point[1] = -point[1]; // flipped y coord
   // moves the origin to the centre of the screen
   point[0] += (int)(width / 2);
   point[1] += (int)(height / 2);
   if (point[0] < width && point[0] >= 0 && point[1] >= 0 && point[1] < height) {
-    if (ooz > zBuffer[width * point[1] + point[0]]) {
+    float currentOoz = zBuffer[width * point[1] + point[0]];
+    if (ooz > currentOoz) {
       buffer[width * point[1] + point[0]] = colour + letter + "\033[0m";
       zBuffer[width * point[1] + point[0]] = ooz;
+    } else if (ooz == currentOoz) {
+      if (averageOoz > currentOoz) {
+        buffer[width * point[1] + point[0]] = colour + letter + "\033[0m";
+        zBuffer[width * point[1] + point[0]] = ooz;
+      }
     }
   }
 }

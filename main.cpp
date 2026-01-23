@@ -103,7 +103,7 @@ int main() {
   int focalLength = 100;
   std::array<float, 3> cameraPos = {0, -200, 0};
   std::array<float, 3> cameraRot = {0, 0, 0};
-  float fps = 20;
+  float fps = 30;
 
   std::array<float, 4> lightSource = { 0, -2000, 0, 3 };
   std::array<float, 4> lightSource2 = { 2000, 0, 0, 0 };
@@ -126,11 +126,18 @@ int main() {
   std::array<float, 3> centre3 = { 0, 60, 0 };
   Model cube3 = makeCube(centre3, sideLength, letters, colours);
 
+  sideLength = 25;
+  std::array<float, 3> centre4 = { 0, 0, 0 };
+  Model cube4 = makeCube(centre4, sideLength, letters, colours);
+
   models.push_back(cube);
   models.push_back(cube2);
   models.push_back(cube3);
+  //models.push_back(cube4);
 
   int frameTime = 1000 / fps;
+  std::vector<int> previousFrameTimes;
+
   while (1) {
     auto start = std::chrono::system_clock::now();
     // render loop
@@ -142,17 +149,17 @@ int main() {
 
       switch (i) {
         case 0:
-          model.rotate(0, 0, 0.2);
+          model.rotate(0, 0, 0.02);
           break;
         case 1:
-          model.rotate(0, 0.1, 0);
+          model.rotate(0, 0.01, 0);
           break;
         case 2:
-          model.rotate(0.3, 0, 0);
+          model.rotate(0.03, 0, 0);
           break;
       }
       //model.rotate(0.1, 0.1, 0.1);
-      //model.translate(0, -3, 0);
+      // model.translate(0, -2, 0);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
       models[i] = model;
@@ -168,9 +175,17 @@ int main() {
       std::this_thread::sleep_for(std::chrono::milliseconds(wait));
     }
 
+    previousFrameTimes.push_back(milliseconds);
+    if (previousFrameTimes.size() > fps) previousFrameTimes.erase(previousFrameTimes.begin());
+
+    int total = 0;
+    for (int milliseconds : previousFrameTimes) total += milliseconds;
+    int average = total / previousFrameTimes.size();
+
+
     clearScreen();
     mainScreen.drawBuffer();
-    std::cout << "FPS: " << (int)(1000/milliseconds) << std::endl;
+    std::cout << "Max FPS: " << (int)(1000/average) << std::endl;
   }
 
   return 0;

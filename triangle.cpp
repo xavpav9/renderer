@@ -123,6 +123,11 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
   char letter = letters[lightPowerIndex];
 
   // fill in the shape with horizontal lines
+  float totalDepth = 0;
+  for (float depth : depths) totalDepth += depth;
+  float averageDepth = totalDepth / depths.size();
+  float averageOoz = 1 / averageDepth; // used to determine which point to show when ooz is the same
+
   for (int y = top; y <= bottom; ++y) { // y referring to up/down (2d)
     int minX = std::numeric_limits<int>::max();
     int maxX = std::numeric_limits<int>::min();
@@ -162,7 +167,7 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
       }
 
       float ooz = 1 / depth;
-      screen.addPoint(point, ooz, letter, colour);
+      screen.addPoint(point, ooz, letter, colour, averageOoz);
     }
   }
 }
