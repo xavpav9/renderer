@@ -87,7 +87,7 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
     }
     std::array<float, 3> cameraAdjustedLightSource = rotateVertex(translateVertex(lightPos, -cameraPos[0], -cameraPos[1], -cameraPos[2]), -cameraRot[0], -cameraRot[1], -cameraRot[2]);
 
-    // get vector
+    // -> get vector between light and one of the triangle vertices
     std::array<float, 3> lightVector;
     for (int i = 0; i < 3; ++i) {
       lightVector[i] = cameraAdjustedLightSource[i] - vectorB[i];
@@ -109,14 +109,17 @@ void Triangle::draw(Screen& screen, std::array<float, 3> cameraPos, std::array<f
 
     // calculate the lightstrength using basic formula I made up
     float angle = std::acos((dotProduct) / (perpendicularVectorMagnitude * lightSourceMagnitude));
-    if (angle < PI / 2) {
-      float change = (angle / (PI / 2)) / lightSource[3] * (lightSourceMagnitude / 1000);
-      if (change < 1) {
-        lightStrength *= change;
-      }
-      // lightSource[3] is the strength of the light
-      // lightSourceMagnitude is also the distance from B to the lightSource
-    }
+      float change = 1;
+
+      /*
+      The smaller the change, the stronger the final light
+      lightSource[3] is the strength of the light
+      lightSourceMagnitude is also the distance from B to the lightSource
+      */
+
+      if (lightSource[3] != 0) change = (angle / (PI / 2)) / lightSource[3] * lightSourceMagnitude / 200;
+
+      if (change < 1) lightStrength *= change;
   }
 
   int lightPowerIndex = std::round(lightStrength);

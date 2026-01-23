@@ -105,7 +105,7 @@ int main() {
   std::array<float, 3> cameraRot = {0, 0, 0};
   float fps = 30;
 
-  std::array<float, 4> lightSource = { 0, -2000, 0, 3 };
+  std::array<float, 4> lightSource = { 0, -400, 0, 10 };
   std::array<float, 4> lightSource2 = { 2000, 0, 0, 0 };
   std::vector<std::array<float,4>> lightSources = { lightSource, lightSource2 };
 
@@ -133,7 +133,7 @@ int main() {
   models.push_back(cube);
   models.push_back(cube2);
   models.push_back(cube3);
-  //models.push_back(cube4);
+  // models.push_back(cube4);
 
   int frameTime = 1000 / fps;
   std::vector<int> previousFrameTimes;
@@ -149,16 +149,17 @@ int main() {
 
       switch (i) {
         case 0:
-          model.rotate(0, 0, 0.02);
+          model.rotate(0, 0, 0.04);
           break;
         case 1:
-          model.rotate(0, 0.01, 0);
+          model.rotate(0, 0.02, 0);
           break;
         case 2:
-          model.rotate(0.03, 0, 0);
+          model.rotate(0.06, 0, 0);
           break;
       }
-      //model.rotate(0.1, 0.1, 0.1);
+
+      // model.rotate(0, 0.01, 0);
       // model.translate(0, -2, 0);
       model.draw(mainScreen, cameraPos, cameraRot, focalLength, lightSources);
 
